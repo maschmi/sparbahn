@@ -1,4 +1,5 @@
 import json        
+from  datetime import datetime
 from requests import Request, Session    
 from bs4 import BeautifulSoup as bs
 from .nocookie import NoCookie
@@ -7,17 +8,43 @@ from .nocookie import NoCookie
 
 class TripData():
 
-    def __init__(self):
-        self.tripJson = None
+    def __init__(self):        
         self.trips = []
         self.tripStart = None
         self.tripEnd = None
-        self.tripDate = None        
+        self.tripDate = None   
+        self.daysToTrip = None     
         
     def readTrip(self, tripJson):
-        self.tripJson = tripJson
         
+        angebotDict = tripJson['angebote']
 
+        priceDict = {}
+        
+        for angebot in angebotDict:
+            price = angebotDict[angebot]['p']
+            for id in angebotDict[angebot]['sids']:
+                priceDict[id] = price
+
+        tripDict = tripJson['verbindungen']
+        
+        for trip in tripDict:
+            nr_trains = len(tripDict[trip]['trains'])
+            singleTrip = {
+                'changes': tripDict[trip]['nt'],
+                'duration': tripDict[trip]['dur'],
+                'price': priceDict[tripDict[trip]['sid']],
+                'departure_date': tripDict[trip]['trains'][0]['dep']['d'],
+                'departure_time': tripDict[trip]['trains'][0]['dep']['t'],
+                'arrival_date': tripDict[trip]['trains'][nr_trains-1]['arr']['d'],
+                'arrival_time': tripDict[trip]['trains'][nr_trains-1]['arr']['t'],
+            }
+            self.trips.append(singleTrip)
+        
+        self.tripDate = datetime.strptime(self.trips[0]['departure_date'],'%d.%m.%y')
+        self.tripEnd = tripJson['dbf'][0]['name']
+        self.tripStart = tripJson['sbf'][0]['name']
+        self.daysToTrip = datetime.now() - self.tripDate
 
 class Sparbahn:
 
@@ -150,8 +177,7 @@ class Sparbahn:
             self.backData = ht.json()
 
 
-    def writeToFile(self):
-        from  datetime import datetime
+    def writeToFile(self):       
         
         if self.toData is not None:
             with open('to_{}.json'.format(datetime.now()),'w') as outfile:
