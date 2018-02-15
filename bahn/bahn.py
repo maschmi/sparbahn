@@ -1,5 +1,5 @@
 import json        
-from  datetime import datetime
+from  datetime import datetime,date
 from requests import Request, Session    
 from bs4 import BeautifulSoup as bs
 from .nocookie import NoCookie
@@ -24,7 +24,7 @@ class TripData():
         for angebot in angebotDict:
             price = angebotDict[angebot]['p']
             for id in angebotDict[angebot]['sids']:
-                priceDict[id] = price
+                priceDict[id] = price.replace(',','.')
 
         tripDict = tripJson['verbindungen']
         
@@ -34,17 +34,28 @@ class TripData():
                 'changes': tripDict[trip]['nt'],
                 'duration': tripDict[trip]['dur'],
                 'price': priceDict[tripDict[trip]['sid']],
-                'departure_date': tripDict[trip]['trains'][0]['dep']['d'],
-                'departure_time': tripDict[trip]['trains'][0]['dep']['t'],
-                'arrival_date': tripDict[trip]['trains'][nr_trains-1]['arr']['d'],
-                'arrival_time': tripDict[trip]['trains'][nr_trains-1]['arr']['t'],
+                'departure': datetime.strptime( "{} {}".format(tripDict[trip]['trains'][0]['dep']['d'],
+                                                tripDict[trip]['trains'][0]['dep']['t']),
+                                                '%d.%m.%y %H:%M'),            
+                'arrival': datetime.strptime( "{} {}".format(tripDict[trip]['trains'][nr_trains-1]['arr']['d'],
+                                                            tripDict[trip]['trains'][nr_trains-1]['arr']['t']),
+                                                    '%d.%m.%y %H:%M'),
+                
             }
             self.trips.append(singleTrip)
         
-        self.tripDate = datetime.strptime(self.trips[0]['departure_date'],'%d.%m.%y')
+        self.tripDate = self.trips[0]['departure'].date()
         self.tripEnd = tripJson['dbf'][0]['name']
         self.tripStart = tripJson['sbf'][0]['name']
-        self.daysToTrip = datetime.now() - self.tripDate
+        self.daysToTrip = datetime.now().date() - self.tripDate
+
+    def findFilter(self, traveldate, departure_time = "16:00", arrival_time = "21:00", max_price = 25):
+        min_time = datetime.strptime("{} {}".format(traveldate,departure_time),
+                                                '%d.%m.%Y %H:%M')
+        max_time = datetime.strptime("{} {}".format(traveldate,arrival_time),
+                                                '%d.%m.%Y %H:%M')
+        journeys = [t for t in self.trips if float(t['price']) < max_price and t['departure'] > min_time and t['arrival'] < max_time]
+        return journeys
 
 class Sparbahn:
 
@@ -55,8 +66,14 @@ class Sparbahn:
         self.reqsession.cookies.set_policy(NoCookie())
         self.tripType = tripType
         self.start = start
-        self.dateTo = dateTo
-        self.dateBack = dateBack
+        if isinstance(dateTo,date):
+            self.dateTo = dateTo.strftime('%d.%m.%Y')
+        else:
+            self.dateTo = dateTo
+        if isinstance(dateBack,date):
+            self.dateBack = dateTo.strftime('%d.%m.%Y')
+        else:
+            self.dateBack = dateTo        
         self.fastOnly = fast
         self.start = start
         self.target = target
@@ -180,9 +197,9 @@ class Sparbahn:
     def writeToFile(self):       
         
         if self.toData is not None:
-            with open('to_{}.json'.format(datetime.now()),'w') as outfile:
+            with open('from_{}_to_{}_at_{}_{}.json'.format(self.start, self.target, self.dateTo, datetime.now()),'w') as outfile:
                 json.dump(self.toData,outfile)
 
         if self.backData is not None:
-            with open('back_{}.json'.format(datetime.now()),'w') as outfile:
+            with open('from_{}_to_{}_at_{}_{}.json'.format(self.target, self.start, self.dateBack,  datetime.now()),'w') as outfile:
                 json.dump(self.backData,outfile)
