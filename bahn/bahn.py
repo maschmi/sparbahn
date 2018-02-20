@@ -3,6 +3,7 @@ from  datetime import datetime,date
 from requests import Request, Session    
 from bs4 import BeautifulSoup as bs
 from .nocookie import NoCookie
+import os
 
 
 
@@ -90,23 +91,8 @@ class Sparbahn:
                     
 
     def getPSCcode(self):
+        """gets a PSCCode from a hidden field needed for the XHR"""
         base_url = "https://ps.bahn.de/preissuche/preissuche/psc_angebotssuche.post"
-        # data = {"startSucheSofort":True ,
-        #         "startBhfName":self.start,
-        #         "startBhfId":self.startID,
-        #         "startBhfLocType":"1",
-        #         "zielBhfName":self.target,
-        #         "schnelleVerbindungen":self.fastOnly,
-        #         "klasse":"2",
-        #         "tripType":self.tripType,
-        #         "datumHin":self.dateTo,
-        #         "sliderHinMin":"0000",
-        #         "sliderHinMax":"1440",
-        #         "datumRueck":self.dateBack,
-        #         "sliderRueckMin":"0000",
-        #         "sliderRueckMax":"1440",
-        #         "travellers": self.travellers
-        #         }
         
         lang = "de"
         country = "DEU"
@@ -131,12 +117,11 @@ class Sparbahn:
         self.session = soup.find(id='pscExpires').attrs['value']
 
     def getData(self):
+        """runs a XHR request get (round)trip and pricing data in JSON"""
         base_url = 'http://ps.bahn.de/preissuche/preissuche/psc_service.go'
         travellers = self.travellers
         travellers[0]['alter'] = ''
-        #reshape the payload to something like 
-        #jQuery311021736690577137074_1518032530614&data=%7B%22s%22%3A%22008002549%22%2C%22d%22%3A%22008000261%22%2C%22dt%22%3A%2208.02.18%22%2C%22t%22%3A%220%3A00%22%2C%22dur%22%3A1440%2C%22pscexpires%22%3A%220702182102-5cd4e44eea411f493f507f597333c820%22%2C%22dir%22%3A1%2C%22sv%22%3Atrue%2C%22ohneICE%22%3Afalse%2C%22bic%22%3Afalse%2C%22tct%22%3A%220%22%2C%22c%22%3A%222%22%2C%22travellers%22%3A%5B%7B%22typ%22%3A%22E%22%2C%22bc%22%3A%220%22%2C%22alter%22%3A%22%22%7D%5D%7D&_=1518032530615
-        #/preissuche/preissuche/psc_service.go?lang=de&country=DEU&data={"s":"008002549","d":"008000261","dt":"08.02.18","t":"0:00","dur":1440,"pscexpires":"0702182158-7e3c016f083bdef0b48b766b364ad3c420","dir":1,"sv":true,"ohneICE":false,"bic":false,"tct":"0","c":"2","travellers":[{"typ":"E","bc":"0","alter":""}]}&service=pscangebotsuche
+        
         if not self.session:
             self.getPSCcode()
 
@@ -154,23 +139,8 @@ class Sparbahn:
             "tct":"0",
             "c":"2",
             "travellers": travellers
-            }
+            }        
         
-        data_back = {
-            "s":self.endID,
-            "d":self.startID,
-            "dt":self.dateBack,
-            "t":"0:00",
-            "dur":"1440",
-            "pscexpires": self.session,
-            "dir":"2",
-            "sv":self.fastOnly,
-            "ohneICE":"false",
-            "bic":"false",
-            "tct":"0",
-            "c":"2",
-            "travellers": travellers
-        }
         payload = { 'data': json.dumps(data_to, ensure_ascii=True),
                     'service':'pscangebotsuche'}
         
@@ -189,17 +159,33 @@ class Sparbahn:
         self.toData = ht.json()
 
         if self.tripType == 'return':
+            data_back = {
+            "s":self.endID,
+            "d":self.startID,
+            "dt":self.dateBack,
+            "t":"0:00",
+            "dur":"1440",
+            "pscexpires": self.session,
+            "dir":"2",
+            "sv":self.fastOnly,
+            "ohneICE":"false",
+            "bic":"false",
+            "tct":"0",
+            "c":"2",
+            "travellers": travellers
+            }
+
             payload['data'] = json.dumps(data_back, ensure_ascii=True)
             ht = self.reqsession.get(base_url,params=payload, headers=headers)
             self.backData = ht.json()
 
 
-    def writeToFile(self):       
+    def writeToFile(self,directory="."):       
         
         if self.toData is not None:
-            with open('from_{}_to_{}_at_{}_{}.json'.format(self.start, self.target, self.dateTo, datetime.now()),'w') as outfile:
+            with open(os.path.join(directory,'from_{}_to_{}_at_{}_{}.json'.format(self.start, self.target, self.dateTo, datetime.now()) ),'w') as outfile:
                 json.dump(self.toData,outfile)
 
         if self.backData is not None:
-            with open('from_{}_to_{}_at_{}_{}.json'.format(self.target, self.start, self.dateBack,  datetime.now()),'w') as outfile:
+            with open(os.path.join(directory,'from_{}_to_{}_at_{}_{}.json'.format(self.target, self.start, self.dateBack,  datetime.now())),'w') as outfile:
                 json.dump(self.backData,outfile)
