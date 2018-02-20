@@ -2,6 +2,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 
+
 class Mailalert:
 
     def __init__(self, tripdata):        
@@ -17,9 +18,9 @@ class Mailalert:
     def createMessage(self, sender, to):
         text = ""        
         for trip in self.tripdata.trips:
-            text += "Für {} von {} um {} nach {} (Ankunft {}) in {} Studen und {}mal umsteigen.\n".format(trip['price'],
-                                                                                                    self.tripdata.tripStart,
+            text += "Für {}€ um {:%H:%M} von {} nach {} (Ankunft {:%H:%M}) in {} Stunden mit {}mal umsteigen.\n".format(trip['price'],                                                                                                    
                                                                                                     trip['departure'],
+                                                                                                    self.tripdata.tripStart,
                                                                                                     self.tripdata.tripEnd,
                                                                                                     trip['arrival'],
                                                                                                     trip['duration'],
