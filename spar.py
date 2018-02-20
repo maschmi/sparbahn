@@ -35,8 +35,7 @@ for i in range(0,future_weeks*2):
     
     tripdata_back = TripData()
     tripdata_back.readTrip(trip.backData)    
-    trips_back.append(tripdata_back)
-
+    trips_back.append(tripdata_back)    
 print(trips_to)
 
 
