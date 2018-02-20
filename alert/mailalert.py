@@ -24,18 +24,20 @@ class Mailalert:
                                                                                                     trip['arrival'],
                                                                                                     trip['duration'],
                                                                                                     trip['changes'])
-        self.message = MIMEText(text)        
-        self.message["Subject"] = "{}: Sparpreise von {} nach {}".format(self.tripdata.tripDate, self.tripdata.tripStart, self.tripdata.tripEnd)
-        self.to = to        
-        self.message["To"] = self.to
-        self.sender = sender
-        self.message["From"] = self.sender
+        if text != "":
+            self.message = MIMEText(text)        
+            self.message["Subject"] = "{}: Sparpreise von {} nach {}".format(self.tripdata.tripDate, self.tripdata.tripStart, self.tripdata.tripEnd)
+            self.to = to        
+            self.message["To"] = self.to
+            self.sender = sender
+            self.message["From"] = self.sender
     
     def sendMessage(self, server, username = None, password = None):
-        self.server = smtplib.SMTP_SSL(host=server)
-        if username is not None and password is not None:
-            self.server.login(username,password)            
-        self.server.send_message(self.message)
+        if self.message is not None:
+            self.server = smtplib.SMTP_SSL(host=server)
+            if username is not None and password is not None:
+                self.server.login(username,password)            
+            self.server.send_message(self.message)
 
         
 
