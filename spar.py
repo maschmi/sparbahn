@@ -1,6 +1,6 @@
 from bahn.bahn import Sparbahn, TripData
 from datetime import datetime, timedelta, date
-
+from alert.mailalert import Mailalert
 
 
 def allweekdays(start_date, weekday, weeks):
@@ -36,6 +36,18 @@ for i in range(0,future_weeks*2):
     tripdata_back = TripData()
     tripdata_back.readTrip(trip.backData)    
     trips_back.append(tripdata_back)    
-print(trips_to)
+
+for tripdata in trips_to:
+  tripdata.trips = tripdata.findFilter(tripdata.tripDate.strftime("%d.%m.%Y"),"15:00","21:00",30)
+  alert = Mailalert(tripdata)
+  alert.createMessage(...)
+  alert.sendMessage(...)
+
+for tripdata in trips_back:
+  tripdata.trips = tripdata.findFilter(tripdata.tripDate.strftime("%d.%m.%Y"),"16:00","23:59",30)
+  alert = Mailalert(tripdata)
+  alert.createMessage(...)
+  alert.sendMessage(...)
+
 
 
