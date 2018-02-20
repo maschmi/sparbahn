@@ -1,7 +1,7 @@
 # Sparbahn
 Some python3 modules to query and filter the Deutsche Bahn Sparpreis search.
 
-This uses an inofficial API endpoint by doing XHR-Requests. Please use with care and not commercial.
+This uses an inofficial API endpoint for XHR-Requests. Please use with care.
 
 ## Why?
 Just for fun.
