@@ -27,7 +27,7 @@ class Mailalert:
                                                                                                     trip['changes'])
         if text != "":
             self.message = MIMEText(text)        
-            self.message["Subject"] = "{}: Sparpreise von {} nach {}".format(self.tripdata.tripDate, self.tripdata.tripStart, self.tripdata.tripEnd)
+            self.message["Subject"] = "{:%d.%m.%y}: Sparpreise von {} nach {}".format(self.tripdata.trips[0]['departure'], self.tripdata.tripStart, self.tripdata.tripEnd)
             self.to = to        
             self.message["To"] = self.to
             self.sender = sender
