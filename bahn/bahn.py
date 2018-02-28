@@ -72,9 +72,9 @@ class Sparbahn:
         else:
             self.dateTo = dateTo
         if isinstance(dateBack,date):
-            self.dateBack = dateTo.strftime('%d.%m.%Y')
+            self.dateBack = dateBack.strftime('%d.%m.%Y')
         else:
-            self.dateBack = dateTo        
+            self.dateBack = dateBack      
         self.fastOnly = fast
         self.start = start
         self.target = target
