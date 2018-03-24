@@ -9,7 +9,8 @@ import os
 
 class TripData():
 
-    def __init__(self):        
+    def __init__(self):
+        self.empty = False        
         self.trips = []
         self.tripStart = None
         self.tripEnd = None
@@ -18,16 +19,21 @@ class TripData():
         
     def readTrip(self, tripJson):
         
-        angebotDict = tripJson['angebote']
+        
 
         priceDict = {}
         
-        for angebot in angebotDict:
-            price = angebotDict[angebot]['p']
-            for id in angebotDict[angebot]['sids']:
-                priceDict[id] = price.replace(',','.')
+        try:
+            angebotDict = tripJson['angebote']
+            for angebot in angebotDict:
+                price = angebotDict[angebot]['p']
+                for id in angebotDict[angebot]['sids']:
+                    priceDict[id] = price.replace(',','.')
 
-        tripDict = tripJson['verbindungen']
+            tripDict = tripJson['verbindungen']
+        except KeyError:
+            self.empty = True
+            return
         
         for trip in tripDict:
             nr_trains = len(tripDict[trip]['trains'])
